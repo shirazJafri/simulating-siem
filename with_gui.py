@@ -22,6 +22,11 @@ class EventHandler(pyinotify.ProcessEvent):
         modify_str =  date_time + ": " + "Modified:" + event.pathname + "\n"
         text_box.insert(tk.END, modify_str)
 
+    def process_IN_CLOSE_NOWRITE(self, event):
+        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+        impermissible_str =  date_time + ": " + "READ-ONLY file was opened:" + event.pathname + "\n"
+        text_box.insert(tk.END, impermissible_str)
+
 window = tk.Tk()
 
 text_box = tk.Text(window)
@@ -61,7 +66,7 @@ def handle_click_start(event):
 
     global wm, wdd, notifier, observer
 
-    mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY # watched events
+    mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_CLOSE_NOWRITE # watched events
 
     monitor = pyudev.Monitor.from_netlink(context)
 
