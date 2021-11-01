@@ -4,14 +4,13 @@ import pyudev
 from datetime import datetime 
 
 class EventHandler(pyinotify.ProcessEvent):
+    '''Event Logs are written to text box here'''
     def process_IN_CREATE(self, event):
-        # print("Creating:", event.pathname)
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
         create_str = date_time + ": " + "Creating:" + event.pathname + "\n"
         text_box.insert(tk.END, create_str)
 
     def process_IN_DELETE(self, event):
-        # print("Removing:", event.pathname)
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
         remove_str = date_time + ": " + "Removing:" + event.pathname + "\n"
         text_box.insert(tk.END, remove_str)
@@ -80,7 +79,7 @@ def handle_click_start(event):
 
     text_box.insert(tk.END, start_str)
 
-    wdd = wm.add_watch('/home/mrantiparallel/Desktop/to_monitor', mask, rec=True)
+    wdd = wm.add_watch('/home/mrantiparallel/Desktop/to_monitor', mask, rec=True) # Edit directory here
     
     notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
 
