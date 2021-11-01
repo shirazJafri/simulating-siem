@@ -80,7 +80,7 @@ def handle_click_start(event):
 
     text_box.insert(tk.END, start_str)
 
-    wdd = wm.add_watch('/home/mrantiparallel/Downloads/', mask, rec=True)
+    wdd = wm.add_watch('/home/mrantiparallel/Desktop/to_monitor', mask, rec=True)
     
     notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
 
