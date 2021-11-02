@@ -19,7 +19,6 @@ class EventHandler(pyinotify.ProcessEvent):
         my_file = open("security.txt", "a+")
         my_file.write(create_str+"\n")
         my_file.close()
-        print("Hello2")
         text_box.insert(tk.END, create_str)
 
     def process_IN_DELETE(self, event):
@@ -28,7 +27,6 @@ class EventHandler(pyinotify.ProcessEvent):
         my_file = open("security.txt", "a+")
         my_file.write(remove_str+"\n")
         my_file.close()
-        print("Hello3")        
         text_box.insert(tk.END, remove_str)
 
     def process_IN_MODIFY(self, event):
@@ -38,7 +36,6 @@ class EventHandler(pyinotify.ProcessEvent):
             my_file = open("security.txt", "a+")
             my_file.write(modify_str+"\n")
             my_file.close()
-            print("Hello4")            
             text_box.insert(tk.END, modify_str)
     def process_IN_CLOSE_NOWRITE(self, event):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
