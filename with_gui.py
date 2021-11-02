@@ -1,7 +1,9 @@
 import tkinter as tk
 import pyinotify
 import pyudev
-from datetime import datetime 
+from datetime import datetime
+
+path = '/home/mrantiparallel/Desktop/to_monitor'
 
 class EventHandler(pyinotify.ProcessEvent):
     '''Event Logs are written to text box here'''
@@ -16,21 +18,22 @@ class EventHandler(pyinotify.ProcessEvent):
         text_box.insert(tk.END, remove_str)
 
     def process_IN_MODIFY(self, event):
-        # print("Modified:", event.pathname)
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        modify_str =  date_time + ": " + "Modified:" + event.pathname + "\n"
-        text_box.insert(tk.END, modify_str)
+        if event.pathname != path:
+            modify_str =  date_time + ": " + "Modified:" + event.pathname + "\n"
+            text_box.insert(tk.END, modify_str)
 
     def process_IN_CLOSE_NOWRITE(self, event):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        impermissible_str =  date_time + ": " + "READ-ONLY file was opened:" + event.pathname + "\n"
-        text_box.insert(tk.END, impermissible_str)
+        if event.pathname != path:
+            impermissible_str =  date_time + ": " + "READ-ONLY file was opened:" + event.pathname + "\n"
+            text_box.insert(tk.END, impermissible_str)
 
 window = tk.Tk()
 
 text_box = tk.Text(window)
 
-text_box.pack()
+text_box.pack(expand= True, fill= tk.BOTH)
 
 button_start = tk.Button(
     text="Start Logging!",
@@ -79,7 +82,7 @@ def handle_click_start(event):
 
     text_box.insert(tk.END, start_str)
 
-    wdd = wm.add_watch('/home/mrantiparallel/Desktop/to_monitor', mask, rec=True) # Edit directory here
+    wdd = wm.add_watch(path, mask, rec=True, auto_add= True) # Edit directory here
     
     notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
 
