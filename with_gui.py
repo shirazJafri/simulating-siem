@@ -2,6 +2,7 @@ import tkinter as tk
 import pyinotify
 import pyudev
 from datetime import datetime
+import os
 
 path = '/home/mrantiparallel/Desktop/to_monitor'
 
@@ -18,9 +19,13 @@ class EventHandler(pyinotify.ProcessEvent):
         text_box.insert(tk.END, remove_str)
 
     def process_IN_MODIFY(self, event):
-        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
         if event.pathname != path:
-            modify_str =  date_time + ": " + "Modified:" + event.pathname + "\n"
+            date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+            last_modified = os.path.getmtime(event.pathname)
+            secs = last_modified / 1e9
+            dt = datetime.fromtimestamp(secs)
+            last_modified_time = dt.strftime("%d-%m-%Y, %H:%M:%S")
+            modify_str = date_time + ": " + "Modified:" + event.pathname + "(Last Modified: " + last_modified_time + ")\n"
             text_box.insert(tk.END, modify_str)
 
     def process_IN_CLOSE_NOWRITE(self, event):
@@ -28,6 +33,12 @@ class EventHandler(pyinotify.ProcessEvent):
         if event.pathname != path:
             impermissible_str =  date_time + ": " + "READ-ONLY file was opened:" + event.pathname + "\n"
             text_box.insert(tk.END, impermissible_str)
+
+    def process_IN_ACCESS(self, event):
+        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+        if event.pathname != path:
+            access_str =  date_time + ": " + "The following file was accessed:" + event.pathname + "\n"
+            text_box.insert(tk.END, access_str)
 
 window = tk.Tk()
 
@@ -68,7 +79,7 @@ def handle_click_start(event):
 
     global wm, wdd, notifier, observer
 
-    mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_CLOSE_NOWRITE # watched events
+    mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_CLOSE_NOWRITE | pyinotify.IN_ACCESS # watched events
 
     monitor = pyudev.Monitor.from_netlink(context)
 
