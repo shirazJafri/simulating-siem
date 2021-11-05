@@ -1,3 +1,4 @@
+from glob import glob
 import tkinter as tk
 from tkinter import filedialog
 import pyinotify
@@ -5,6 +6,13 @@ import pyudev
 from datetime import datetime
 import time
 import os
+import requests
+import threading
+import multiprocessing
+import warnings
+
+warnings.filterwarnings('ignore')
+ADDRESS_FILE = 'old_ip_address.txt'
 
 def Upload():
     global path
@@ -150,20 +158,42 @@ def log_event(action, device):
         my_file.close()
         text_box.insert(tk.END, formatted_str)
 
+def log_input_event(action, device):
+    if 'ID_INPUT_MOUSE' in device and device.sys_name.startswith('event'):
+        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+        formatted_str = date_time + ": Hardware Input Event - " + '{0} - {1}\n'.format(action, device.parent['NAME'])
+        my_file = open("security.txt", "a+")
+        my_file.write(formatted_str+"\n")
+        my_file.close()
+        text_box.insert(tk.END, formatted_str)
+
 def handle_click_start(event):
     context = pyudev.Context()
 
     text_box.delete(1.0, tk.END)
 
-    global wm, wdd, notifier, observer
-
-    mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_OPEN | pyinotify.IN_MOVE_SELF | pyinotify.IN_MOVED_TO | pyinotify.IN_MOVED_FROM | pyinotify.IN_ATTRIB | pyinotify.IN_MODIFY | pyinotify.IN_DELETE_SELF# watched events
+    global wm, wdd, notifier, observer, ip_process, input_observer
 
     monitor = pyudev.Monitor.from_netlink(context)
 
-    monitor.filter_by('block')
+    input_monitor = pyudev.Monitor.from_netlink(context)
 
-    wm = pyinotify.WatchManager()  # Watch Manager
+    monitor.filter_by(subsystem= 'block')
+
+    monitor.filter_by(subsystem= 'input')
+
+    try:
+        path
+    except NameError:
+        pass
+    else:
+        mask = pyinotify.IN_DELETE | pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_OPEN | pyinotify.IN_MOVE_SELF | pyinotify.IN_MOVED_TO | pyinotify.IN_MOVED_FROM | pyinotify.IN_ATTRIB | pyinotify.IN_DELETE_SELF# watched events
+        wm = pyinotify.WatchManager()  # Watch Manager
+        wdd = wm.add_watch(path, mask, rec=True, auto_add= True)
+        notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
+        notifier.start()
+
+    ip_process = multiprocessing.Process(target= threading_function, args= ())
 
     date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
 
@@ -171,15 +201,15 @@ def handle_click_start(event):
 
     text_box.insert(tk.END, start_str)
 
-    wdd = wm.add_watch(path, mask, rec=True, auto_add= True) # Edit directory here
-    
-    notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
-
     observer = pyudev.MonitorObserver(monitor, log_event)
 
-    observer.start()
+    input_observer = pyudev.MonitorObserver(input_monitor, log_input_event)
 
-    notifier.start()
+    input_observer.start()
+
+    ip_process.start()
+
+    observer.start()
 
 def handle_click_stop(event):
     date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
@@ -188,17 +218,69 @@ def handle_click_stop(event):
 
     text_box.insert(tk.END, stop_str)
 
-    wm.rm_watch(wdd.values(), rec= True)
+    try:
+        path
+    except NameError:
+        pass
+    else:
+        wm.rm_watch(wdd.values(), rec= True)
+        notifier.stop()
+
+    input_observer.stop()
 
     observer.stop()
 
-    notifier.stop()
+    ip_process.terminate()
 
 def history_log(event):
     my_file2 = open("security.txt", "r")
     text_box.delete(1.0, tk.END)
     for x in my_file2:
         text_box.insert(tk.END,x)
+
+def detect_ip_changes():
+    # [detect_ip_change ends]
+
+    def persist_ip(ip):
+        f = open(ADDRESS_FILE, 'w')
+        f.write(ip)
+        f.close()
+    # [persist_ip ends]
+
+    def read_old_ip():
+        f = open(ADDRESS_FILE, 'r')
+        oldIp = f.read()
+        f.close()
+        return oldIp
+    # [read_old_ip ends]
+
+    change = False
+
+    currIp = requests.get('https://api.ipify.org').text
+
+    if not os.path.isfile(ADDRESS_FILE):
+        persist_ip('127.0.0.1')
+
+    oldIp = read_old_ip()
+
+    if currIp != oldIp and oldIp != '127.0.0.1':
+        change = True
+        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+        ip_change_str =  date_time + ": " + "Network change! IP address changed from {} to {}\n".format(oldIp, currIp)
+        my_file = open("security.txt", "a+")
+        my_file.write(ip_change_str+"\n")
+        my_file.close()
+        text_box.insert(tk.END, ip_change_str)
+
+    persist_ip(currIp)
+    
+    return change
+
+def threading_function():
+    while True:
+        change = detect_ip_changes()
+
+        time.sleep(30)
 
 button_start.bind("<Button-1>", handle_click_start)
 button_stop.bind("<Button-1>", handle_click_stop)
