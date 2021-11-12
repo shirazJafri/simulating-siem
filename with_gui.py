@@ -1,4 +1,3 @@
-from glob import glob
 import tkinter as tk
 from tkinter import filedialog
 import pyinotify
@@ -7,9 +6,9 @@ from datetime import datetime
 import time
 import os
 import requests
-import threading
 import multiprocessing
 import warnings
+import cv2
 
 warnings.filterwarnings('ignore')
 ADDRESS_FILE = 'old_ip_address.txt'
@@ -24,12 +23,23 @@ def Upload():
 class EventHandler(pyinotify.ProcessEvent):
     '''Event Logs are written to text box here'''
     def process_IN_CREATE(self, event):
-        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        create_str = date_time + ": " + "Creating:" + event.pathname + "\n"
-        my_file = open("security.txt", "a+")
-        my_file.write(create_str+"\n")
-        my_file.close()
-        text_box.insert(tk.END, create_str)
+        if str(event.pathname).find('goutputstream') == -1:
+            date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+            create_str = date_time + ": " + "Creating:" + event.pathname + "\n"
+            my_file = open("security.txt", "a+")
+            my_file.write(create_str+"\n")
+            my_file.close()
+            text_box.insert(tk.END, create_str)
+
+            videoCaptureObject = cv2.VideoCapture(-1)
+            result = True
+            while(result):
+                ret,frame = videoCaptureObject.read()
+                cv2.imwrite("Intruder_Create.jpg",frame)
+                result = False
+
+            videoCaptureObject.release()
+            cv2.destroyAllWindows()
 
     def process_IN_DELETE(self, event):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
@@ -39,40 +49,60 @@ class EventHandler(pyinotify.ProcessEvent):
         my_file.close()
         text_box.insert(tk.END, remove_str)
 
+        videoCaptureObject = cv2.VideoCapture(-1)
+        result = True
+        while(result):
+            ret,frame = videoCaptureObject.read()
+            cv2.imwrite("Intruder_Delete.jpg",frame)
+            result = False
+        videoCaptureObject.release()
+        cv2.destroyAllWindows()
+
     def process_IN_MODIFY(self, event):
         if event.pathname != path:
             date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-            last_modified = os.path.getmtime(event.pathname)
-            modify_str = date_time + ": " + "Modified:" + event.pathname + "(Last Modified: " + time.ctime(last_modified) + ")\n"
+            modify_str = date_time + ": " + "Accessed file was modified!\n"
             my_file = open("security.txt", "a+")
             my_file.write(modify_str+"\n")
             my_file.close()
             text_box.insert(tk.END, modify_str)
 
-    # def process_IN_OPEN(self, event):
-    #     date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-    #     if event.pathname != path:
-    #         access_str =  date_time + ": " + "The following file was accessed:" + event.pathname + "\n"
-    #         my_file = open("security.txt", "a+")
-    #         my_file.write(access_str+"\n")
-    #         my_file.close()
-    #         text_box.insert(tk.END, access_str)
+            videoCaptureObject = cv2.VideoCapture(-1)
+            result = True
+            while(result):
+                ret,frame = videoCaptureObject.read()
+                cv2.imwrite("Intruder_Modify.jpg",frame)
+                result = False
+            videoCaptureObject.release()
+            cv2.destroyAllWindows()
+
+    def process_IN_OPEN(self, event):
+        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+        if event.pathname != path and str(event.pathname).find('goutputstream') == -1:
+            access_str =  date_time + ": " + "The following file was accessed:" + event.pathname + "\n"
+            my_file = open("security.txt", "a+")
+            my_file.write(access_str+"\n")
+            my_file.close()
+            text_box.insert(tk.END, access_str)
 
     def process_IN_MOVED_TO(self, event):
-        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        move_to_str =  date_time + ": " + "Files are being added to directory!!!\n"
-        my_file = open("security.txt", "a+")
-        my_file.write(move_to_str+"\n")
-        my_file.close()
-        text_box.insert(tk.END, move_to_str)
+        if str(event.pathname).find('goutputstream') == -1:
+            print(event.pathname)
+            date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+            move_to_str =  date_time + ": " + "Files are being added to directory!!!\n"
+            my_file = open("security.txt", "a+")
+            my_file.write(move_to_str+"\n")
+            my_file.close()
+            text_box.insert(tk.END, move_to_str)
 
     def process_IN_MOVED_FROM(self, event):
-        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        move_from_str =  date_time + ": " + "Files are being taken out of directory!!!\n"
-        my_file = open("security.txt", "a+")
-        my_file.write(move_from_str+"\n")
-        my_file.close()
-        text_box.insert(tk.END, move_from_str)
+        if str(event.pathname).find('goutputstream') == -1:
+            date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+            move_from_str =  date_time + ": " + "Files are being taken out of directory!!!\n"
+            my_file = open("security.txt", "a+")
+            my_file.write(move_from_str+"\n")
+            my_file.close()
+            text_box.insert(tk.END, move_from_str)
 
     def process_IN_MOVE_SELF(self, event):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
@@ -84,8 +114,8 @@ class EventHandler(pyinotify.ProcessEvent):
 
     def process_IN_ATTRIB(self, event):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        if event.pathname != path:
-            attrib_str =  date_time + ": " + "The following file's metadata was altered':" + event.pathname + "\n"
+        if event.pathname != path and str(event.pathname).find('goutputstream') == -1:
+            attrib_str =  date_time + ": " + "Following file metadata changed: " + event.pathname + "\n"
             my_file = open("security.txt", "a+")
             my_file.write(attrib_str+"\n")
             my_file.close()
@@ -158,6 +188,15 @@ def log_event(action, device):
         my_file.close()
         text_box.insert(tk.END, formatted_str)
 
+        videoCaptureObject = cv2.VideoCapture(-1)
+        result = True
+        while(result):
+            ret,frame = videoCaptureObject.read()
+            cv2.imwrite("Intruder_USB.jpg",frame)
+            result = False
+        videoCaptureObject.release()
+        cv2.destroyAllWindows()
+
 def log_input_event(action, device):
     if 'ID_INPUT_MOUSE' in device and device.sys_name.startswith('event'):
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
@@ -180,7 +219,7 @@ def handle_click_start(event):
 
     monitor.filter_by(subsystem= 'block')
 
-    monitor.filter_by(subsystem= 'input')
+    input_monitor.filter_by(subsystem= 'input')
 
     try:
         path
