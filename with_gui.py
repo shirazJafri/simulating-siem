@@ -35,7 +35,8 @@ class EventHandler(pyinotify.ProcessEvent):
             result = True
             while(result):
                 ret,frame = videoCaptureObject.read()
-                cv2.imwrite("Intruder_Create.jpg",frame)
+                filename = date_time + ": Intruder_Create.jpg"
+                cv2.imwrite(filename,frame)
                 result = False
 
             videoCaptureObject.release()
@@ -53,7 +54,8 @@ class EventHandler(pyinotify.ProcessEvent):
         result = True
         while(result):
             ret,frame = videoCaptureObject.read()
-            cv2.imwrite("Intruder_Delete.jpg",frame)
+            filename = date_time + ": Intruder_Delete.jpg"
+            cv2.imwrite(filename,frame)
             result = False
         videoCaptureObject.release()
         cv2.destroyAllWindows()
@@ -71,7 +73,8 @@ class EventHandler(pyinotify.ProcessEvent):
             result = True
             while(result):
                 ret,frame = videoCaptureObject.read()
-                cv2.imwrite("Intruder_Modify.jpg",frame)
+                filename = date_time + ": Intruder_Modify.jpg"
+                cv2.imwrite(filename,frame)
                 result = False
             videoCaptureObject.release()
             cv2.destroyAllWindows()
@@ -192,7 +195,8 @@ def log_event(action, device):
         result = True
         while(result):
             ret,frame = videoCaptureObject.read()
-            cv2.imwrite("Intruder_USB.jpg",frame)
+            filename = date_time + ": Intruder_USB-Event.jpg"
+            cv2.imwrite(filename,frame)
             result = False
         videoCaptureObject.release()
         cv2.destroyAllWindows()
