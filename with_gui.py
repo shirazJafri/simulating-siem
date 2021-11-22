@@ -9,13 +9,20 @@ import requests
 import multiprocessing
 import warnings
 import cv2
+import subprocess
+from signal import SIGTERM
+from process_count import getProcessCount
+from kill_bitmap import cease_bitmap, cease_browser_activity
 
 warnings.filterwarnings('ignore')
 ADDRESS_FILE = 'old_ip_address.txt'
 
 def Upload():
     global path
-    path = filedialog.askdirectory(title = "Select the Folder you want to monitor")
+    global procCount
+    procCount = getProcessCount()
+    # print(procCount)
+    path = filedialog.askdirectory(title = "Select the Folder you want to monitor", initialdir= "/home/mrantiparallel")
     my_file = open("security.txt", "a+")
     my_file.write(path+"\n")
     my_file.close()
@@ -91,6 +98,27 @@ class EventHandler(pyinotify.ProcessEvent):
     def process_IN_MOVED_TO(self, event):
         if str(event.pathname).find('goutputstream') == -1:
             print(event.pathname)
+            if str(event.pathname).find('spawn_processes') != -1:
+                process = subprocess.Popen([event.pathname])
+                date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+                print(date_time + ": Execution of unknown script commenced!")
+                time.sleep(5)
+                if (cease_browser_activity()):
+                    print(date_time + ": BROWSER ACTIVITY!!! Terminating...")
+                
+                if getProcessCount() - procCount >= 5:
+                    print("MORE THAN 5 PROCESSES OF INFECTIOUS NATURE ARE BEING SPAWNED!!! Terminating...")
+                    cease_bitmap()
+                    # videoCaptureObject = cv2.VideoCapture(-1)
+                    # result = True
+                    # while(result):
+                    #     ret,frame = videoCaptureObject.read()
+                    #     filename = date_time + ": Intruder_Modify.jpg"
+                    #     cv2.imwrite(filename,frame)
+                    #     result = False
+                    # videoCaptureObject.release()
+                    # cv2.destroyAllWindows()
+    
             date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
             move_to_str =  date_time + ": " + "Files are being added to directory!!!\n"
             my_file = open("security.txt", "a+")
