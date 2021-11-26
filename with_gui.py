@@ -1,5 +1,8 @@
 import tkinter as tk
+import tkinter.font as fnt
 from tkinter import filedialog
+from tkinter import *
+from PIL import ImageTk, Image
 import pyinotify
 import pyudev
 from datetime import datetime
@@ -23,9 +26,14 @@ def Upload():
     procCount = getProcessCount()
     # print(procCount)
     path = filedialog.askdirectory(title = "Select the Folder you want to monitor", initialdir= "/home/mrantiparallel")
+    print(path)
     my_file = open("security.txt", "a+")
-    my_file.write(path+"\n")
+    my_file.write(path + "\n")
     my_file.close()
+
+    my_file_2 = open("warnings.txt", "a+")
+    my_file_2.write(path + "\n")
+    my_file_2.close() 
 
 class EventHandler(pyinotify.ProcessEvent):
     '''Event Logs are written to text box here'''
@@ -97,34 +105,53 @@ class EventHandler(pyinotify.ProcessEvent):
 
     def process_IN_MOVED_TO(self, event):
         if str(event.pathname).find('goutputstream') == -1:
-            print(event.pathname)
-            if str(event.pathname).find('spawn_processes') != -1:
-                process = subprocess.Popen([event.pathname])
-                date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-                print(date_time + ": Execution of unknown script commenced!")
-                time.sleep(5)
-                if (cease_browser_activity()):
-                    print(date_time + ": BROWSER ACTIVITY!!! Terminating...")
-                
-                if getProcessCount() - procCount >= 5:
-                    print("MORE THAN 5 PROCESSES OF INFECTIOUS NATURE ARE BEING SPAWNED!!! Terminating...")
-                    cease_bitmap()
-                    # videoCaptureObject = cv2.VideoCapture(-1)
-                    # result = True
-                    # while(result):
-                    #     ret,frame = videoCaptureObject.read()
-                    #     filename = date_time + ": Intruder_Modify.jpg"
-                    #     cv2.imwrite(filename,frame)
-                    #     result = False
-                    # videoCaptureObject.release()
-                    # cv2.destroyAllWindows()
-    
             date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
             move_to_str =  date_time + ": " + "Files are being added to directory!!!\n"
             my_file = open("security.txt", "a+")
             my_file.write(move_to_str+"\n")
             my_file.close()
             text_box.insert(tk.END, move_to_str)
+            if str(event.pathname).find('spawn_processes') != -1:
+                process = subprocess.Popen([event.pathname])
+                date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+                exec_str = date_time + ": Execution of unknown script commenced!\n"
+                text_box2.insert(tk.END, exec_str)
+                # print(date_time + ": Execution of unknown script commenced!")
+                time.sleep(15)
+                if (cease_browser_activity()):
+                    browser_str = date_time + ": Un-identified Browser Activity! Terminating...\n"
+                    # print(date_time + ": BROWSER ACTIVITY!!! Terminating...")
+                    text_box2.insert(tk.END, browser_str)
+                    my_file_2 = open("warnings.txt", "a+")
+                    my_file_2.write(browser_str + "\n")
+                    my_file_2.close()
+                    videoCaptureObject = cv2.VideoCapture(-1)
+                    result = True
+                    while(result):
+                        ret,frame = videoCaptureObject.read()
+                        filename = date_time + ": Intruder_Browser.jpg"
+                        cv2.imwrite(filename,frame)
+                        result = False
+                    videoCaptureObject.release()
+                    cv2.destroyAllWindows()
+                
+                time.sleep(5)
+                if getProcessCount() - procCount >= 5:
+                    proc_str = date_time + ": More Than 5 Processes Of Infectious Nature are Being Spawned! Terminating...\n"
+                    text_box2.insert(tk.END, proc_str)
+                    my_file_2 = open("warnings.txt", "a+")
+                    my_file_2.write(proc_str + "\n")
+                    my_file_2.close()
+                    cease_bitmap()
+                    videoCaptureObject = cv2.VideoCapture(-1)
+                    result = True
+                    while(result):
+                        ret,frame = videoCaptureObject.read()
+                        filename = date_time + ": Intruder_Process_Spawn.jpg"
+                        cv2.imwrite(filename,frame)
+                        result = False
+                    videoCaptureObject.release()
+                    cv2.destroyAllWindows()
 
     def process_IN_MOVED_FROM(self, event):
         if str(event.pathname).find('goutputstream') == -1:
@@ -163,52 +190,143 @@ class EventHandler(pyinotify.ProcessEvent):
 window = tk.Tk()
 
 f = tk.Frame(window)
-f.place(x=100, y=20)
+f.place(x=100, y=240)
+
+ff = tk.Frame(window)
+ff.place(x=1000, y=250)
+
+t2 = tk.Frame(window)
+t2.place(x=100, y=480)
+
+
 scrollbar = tk.Scrollbar(f)
-text_box = tk.Text(f, height=25, width=125, yscrollcommand=scrollbar.set)
+text_box = tk.Text(f, height=12, width=105, yscrollcommand=scrollbar.set)
 scrollbar.config(command=text_box.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 text_box.pack(expand= True, fill= tk.BOTH)
+
+
+
+scrollbar2 = tk.Scrollbar(t2)
+text_box2 = tk.Text(t2, height=8, width=105, yscrollcommand=scrollbar.set, fg="red")
+scrollbar2.config(command=text_box.yview)
+scrollbar2.pack(side=tk.RIGHT, fill=tk.Y)
+text_box2.pack(expand= True, fill= tk.BOTH)
+
+
+user_name = Label(window, 
+                  text = "Logging").place(x=100, y=220)  
+
+user_name2 = Label(window, 
+                  text = "Warning", foreground= 'red').place(x=100, y=460)  
+# f = tk.Frame(window)
+# f.place(x=100, y=20)
+# scrollbar = tk.Scrollbar(f)
+# text_box = tk.Text(f, height=25, width=125, yscrollcommand=scrollbar.set)
+# scrollbar.config(command=text_box.yview)
+# scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+# text_box.pack(expand= True, fill= tk.BOTH)
+
+window.title("Security Information and Event Management (SIEM)")
+window.geometry('850x850')
+#window.configure(background='white')
+#window.resizable(width=0, height=0)
+
+w = Label(window, text='Security Information and Event Management System', font = fnt.Font(size = 16, family='Corbel'))
+w.pack(padx = 0, pady = 10)
+
+img = ImageTk.PhotoImage(master=window, file = r'ss1.png')
+panel = tk.Label(window, image = img)
+
+panel.image = img
+
+panel.pack(side = "top", fill = "both")
+
 button_upload = tk.Button(
-    f,
+    ff,
     text="Upload!",
+    font = fnt.Font(size = 12, family='Tahoma bold'),
     width=25,
     height=3,
     bg="blue",
-    fg="yellow",
+    fg="white",
     command = Upload
 )
-button_upload.pack()
+button_upload.pack(padx = 10, pady = 10)
+
 button_start = tk.Button(
-    f,
+    ff,
     text="Start Logging!",
+    font = fnt.Font(size = 12, family='Tahoma bold'),
     width=25,
     height=3,
     bg="blue",
-    fg="yellow",
+    fg="white",
 )
 
-button_start.pack()
+button_start.pack(padx = 10, pady = 10)
 
 button_stop = tk.Button(
-    f,
+    ff,
     text="Stop Logging!",
+    font = fnt.Font(size = 12, family='Tahoma bold'),
     width=25,
     height=3,
-    bg="blue",
-    fg="yellow",
+    bg="red",
+    fg="white",
 )
-button_stop.pack()
+button_stop.pack(padx = 10, pady = 10)
 
 button_history = tk.Button(
-    f,
+    ff,
     text="History!",
+    font = fnt.Font(size = 12, family='Tahoma bold'),
     width=25,
     height=3,
     bg="blue",
-    fg="yellow",
+    fg="white",
 )
-button_history.pack()
+button_history.pack(padx = 10, pady = 10)
+# button_upload = tk.Button(
+#     f,
+#     text="Upload!",
+#     width=25,
+#     height=3,
+#     bg="blue",
+#     fg="yellow",
+#     command = Upload
+# )
+# button_upload.pack()
+# button_start = tk.Button(
+#     f,
+#     text="Start Logging!",
+#     width=25,
+#     height=3,
+#     bg="blue",
+#     fg="yellow",
+# )
+
+# button_start.pack()
+
+# button_stop = tk.Button(
+#     f,
+#     text="Stop Logging!",
+#     width=25,
+#     height=3,
+#     bg="blue",
+#     fg="yellow",
+# )
+# button_stop.pack()
+
+# button_history = tk.Button(
+#     f,
+#     text="History!",
+#     width=25,
+#     height=3,
+#     bg="blue",
+#     fg="yellow",
+# )
+# button_history.pack()
 
 def log_event(action, device):
     if 'ID_FS_TYPE' in device:
@@ -217,7 +335,7 @@ def log_event(action, device):
         my_file = open("security.txt", "a+")
         my_file.write(formatted_str+"\n")
         my_file.close()
-        text_box.insert(tk.END, formatted_str)
+        text_box2.insert(tk.END, formatted_str)
 
         videoCaptureObject = cv2.VideoCapture(-1)
         result = True
@@ -308,6 +426,11 @@ def history_log(event):
     text_box.delete(1.0, tk.END)
     for x in my_file2:
         text_box.insert(tk.END,x)
+
+    my_file_2 = open("warnings.txt", "r")
+    text_box2.delete(1.0, tk.END)
+    for x in my_file_2:
+        text_box2.insert(tk.END,x)
 
 def detect_ip_changes():
     # [detect_ip_change ends]
