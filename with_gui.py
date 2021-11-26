@@ -94,14 +94,14 @@ class EventHandler(pyinotify.ProcessEvent):
             videoCaptureObject.release()
             cv2.destroyAllWindows()
 
-    def process_IN_OPEN(self, event):
-        date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-        if event.pathname != path and str(event.pathname).find('goutputstream') == -1:
-            access_str =  date_time + ": " + "The following file was accessed:" + event.pathname + "\n"
-            my_file = open("security.txt", "a+")
-            my_file.write(access_str+"\n")
-            my_file.close()
-            text_box.insert(tk.END, access_str)
+    # def process_IN_OPEN(self, event):
+    #     date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+    #     if event.pathname != path and str(event.pathname).find('goutputstream') == -1:
+    #         access_str =  date_time + ": " + "The following file was accessed:" + event.pathname + "\n"
+    #         my_file = open("security.txt", "a+")
+    #         my_file.write(access_str+"\n")
+    #         my_file.close()
+    #         text_box.insert(tk.END, access_str)
 
     def process_IN_MOVED_TO(self, event):
         if str(event.pathname).find('goutputstream') == -1:
@@ -332,9 +332,9 @@ def log_event(action, device):
     if 'ID_FS_TYPE' in device:
         date_time = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
         formatted_str = date_time + ": USB Event - " + '{0} - {1}\n'.format(action, device.get('ID_FS_LABEL'))
-        my_file = open("security.txt", "a+")
-        my_file.write(formatted_str+"\n")
-        my_file.close()
+        my_file_2 = open("warnings.txt", "a+")
+        my_file_2.write(formatted_str + "\n")
+        my_file_2.close()
         text_box2.insert(tk.END, formatted_str)
 
         videoCaptureObject = cv2.VideoCapture(-1)
